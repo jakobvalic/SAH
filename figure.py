@@ -15,17 +15,15 @@ def je_v_polju(poteza):
     x, y = poteza
     return 0 <= min(x, y) <= max(x, y) <= 7
 
-class Konj():
-    def __init__(self, polozaj):
-        '''Zameril si se mi, konj!'''
+class Konj:
+    '''Zameril si se mi, konj!'''
+    def __init__(self, IGRA):
         self.polozaj = polozaj
         self.poteze = []
         self.mozne_poteze(polozaj) # napolnimo self.poteze z možnimi potezami
 
     def mozne_poteze(self, polozaj):
         '''Vrne seznam možnih potez konja.'''
-        st = list('ABCDEFGH'.split())
-        vr = [1, 2, 3, 4, 5, 6, 7, 8]
         x, y = polozaj # x: A, B, C, D, E, F, G, H;    y: 1, 2, 3, 4, 5, 6, 7, 8
         mozne_p = list()
         veljavne_mozne  = list()
@@ -38,13 +36,7 @@ class Konj():
         levo = x - 2
         desno = x + 2
         mozne_p += [(levo, y-1), (levo, y+1)]
-        mozne_p += [(desno, y-1), (desno, y+1)]
-##        for i in range(len(mozne_p)):
-##            poteza = mozne_p[i]
-##            if poteza in self.polozaj_lastnih:
-##                pass
-##            else:
-##                append           
+        mozne_p += [(desno, y-1), (desno, y+1)]          
         for poteza in mozne_p:
             if je_v_polju(poteza) and lastne_ovire(poteza, polozaj_lastnih):
                 veljavne_mozne.append(poteza)
@@ -64,7 +56,7 @@ print(konj.poteze)
 konj = Konj(polozaj3)
 print(konj.poteze)
 
-class Lovec():
+class Lovec:
     def __init__(self, polozaj):
         self.polozaj = polozaj
         self.poteze = []
@@ -105,6 +97,7 @@ lovec = Lovec(polozaj3)
 print(polozaj3, lovec.poteze)
 
 class Kmet():
+    '''Počasi se daleč pride.'''
     def __init__(self, polozaj, polozaj_lastnih, polozaj_nasprotnih):
         self.polozaj = polozaj
         self.polozaj_lastnih = polozaj_lastnih
@@ -135,6 +128,7 @@ class Kmet():
         
 
 class Trdnjava():
+    '''Castrum ad Fluvium frigidum.'''
     def __init__(self, polozaj, polozaj_lastnih, polozaj_nasprotnih):
         self.poteze = [] # ali zaenkrat rabiva kaj več?
         self.mozne_poteze(polozaj, polozaj_lastnih, polozaj_nasprotnih)
@@ -144,7 +138,7 @@ class Trdnjava():
         '''Vrne seznam vseh možnih potez trdnjave.'''
         mozne = []
         (x, y) = polozaj
-                                                                            # for i in range(2): # zaradi simetrije, za gor in dol bomo zamenjali vlogi x in y :)
+                                       # for i in range(2): # zaradi simetrije, za gor in dol bomo zamenjali vlogi x in y :)
         # desno:
         premik = 1        
         while x + premik <= 7:
@@ -165,8 +159,8 @@ class Trdnjava():
                 break
             mozne.append((x - premik, y))
             premik += 1
-                                                                            # sedaj zamenjamo vlogi x in y :)
-                                                                            # (y, x) = polozaj
+                                        # sedaj zamenjamo vlogi x in y :)
+                                        # (y, x) = polozaj
         # gor:
         premik = 1        
         while y + premik <= 7:
@@ -194,7 +188,16 @@ class Trdnjava():
 trdnjava = Trdnjava(polozaj, polozaj_lastnih, polozaj_nasprotnih)
 print('\ntrdnjave\n', polozaj, trdnjava.poteze, sep = '')
 
+class Kralj:
+    '''Eden in edini.'''
+    def __init__(self, barva, IGRA):
+        self.barva = barva
 
+
+class Dama:
+    '''Ko življenje postane razburljivo.'''
+    def __init__(self, barva, IGRA):
+        self.barva = barva
 
 
 
