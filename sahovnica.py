@@ -23,37 +23,43 @@ class Sahovnica:
         self.platno.pack()
 
         # bele figure
-##        K = Kralj('b')
-##        D = Dama('b')
-##        T1 = Trdnjava('b')
-##        T2 = Trdnjava('b')
-##        L1 = Lovec('b')
-##        L2 = Lovec('b')
-##        S1 = Konj('b')
-##        S2 = Konj('b')
-##        k1, k2, k3, k4, k5, k6, k7, k8 = Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b') # kako bi to naredili z zanko ?
-##
-##        # črne figure
-##        K_ = Kralj('č')
-##        D_ = Dama('č')
-##        T1_ = Trdnjava('č')
-##        T2_ = Trdnjava('č')
-##        L1_ = Lovec('č')
-##        L2_ = Lovec('č')
-##        S1_ = Konj('č')
-##        S2_ = Konj('č')
-##        k1_, k2_, k3_, k4_, k5_, k6_, k7_, k8_ = Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č')
-##
-##        # imamo trenutno pozicijo
-##        self.IGRA = [
-##            [T1_ , S1_ , L1_ , D_  , K_  , L2_ , S_2 , T2_ ],
-##            [k1_ , k2_ , k3_ , k4_ , k5_ , k_6 , k_7 , k_8 ],
-##            [None, None, None, None, None, None, None, None],
-##            [None, None, None, None, None, None, None, None],
-##            [None, None, None, None, None, None, None, None],
-##            [None, None, None, None, None, None, None, None],
-##            [k1  , k2  , k3  , k4  , k5  , k6  , k7  , k8  ],
-##            [T1  , S1  , L1  , D   , K   , L2  , S2  , T2  ]]
+        K = Kralj('b')
+        D = Dama('b')
+        T1 = Trdnjava('b')
+        T2 = Trdnjava('b')
+        L1 = Lovec('b')
+        L2 = Lovec('b')
+        S1 = Konj('b')
+        S2 = Konj('b')
+        k1, k2, k3, k4, k5, k6, k7, k8 = Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b'), Kmet('b') # kako bi to naredili z zanko ?
+
+        # črne figure
+        K_ = Kralj('č', self.IGRA)
+        D_ = Dama('č')
+        T1_ = Trdnjava('č')
+        T2_ = Trdnjava('č')
+        L1_ = Lovec('č')
+        L2_ = Lovec('č')
+        S1_ = Konj('č')
+        S2_ = Konj('č')
+        k1_, k2_, k3_, k4_, k5_, k6_, k7_, k8_ = Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č'), Kmet('č')
+
+        # imamo trenutno pozicijo
+        self.IGRA = [
+            [T1_ , S1_ , L1_ , D_  , K_  , L2_ , S_2 , T2_ ],
+            [k1_ , k2_ , k3_ , k4_ , k5_ , k6_ , k7_ , k8_ ],
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+            [k1  , k2  , k3  , k4  , k5  , k6  , k7  , k8  ],
+            [T1  , S1  , L1  , D   , K   , L2  , S2  , T2  ]]
+
+        # matrika je zaradi rekonstrukcije, zato da programer vidi, kaj se dogaja
+        # IGRA v logiki
+        # najprej spremeniš v logiki, nato sporočiš GUI, da nariše drugam
+        # class Figura: x, y, barva -> kar je skupno vsem figuram
+        # class Kmet(Figura): mozne poteze, slika
 
 
         # narišemo šahovnico
