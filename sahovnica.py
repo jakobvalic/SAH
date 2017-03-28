@@ -1,6 +1,7 @@
 # šahovnica
 # GUI: tukaj se zgolj riše in zaznava klike !!!
 
+
 import tkinter as tk
 
 def narisi_sahovnico(platno, d, odmik):
@@ -85,11 +86,19 @@ class Sahovnica:
 
     def prikaz_figur(self):
         '''Na šahovnici prikaže figure.'''
+        for i in range(8):
+            for j in range(8):
+                figura = self.IGRA[i][j]
+                if figura is not None:
+                    # jo narišemo
+                    slika = figura.photo #  kmet = tk.Image.open("kmet.png")
+                                         #  figura.photo = ImageTk.PhotoImage(kmet)
+                    self.platno.place(x=10, y=20) # tu izračunamo x in y koordinate glede na polje, v katerem se nahajamo
     
             
 root = tk.Tk()
 
-sah = Sahovnica(root, [], [])
+sah = Sahovnica(root)
 
 root.mainloop()
 
