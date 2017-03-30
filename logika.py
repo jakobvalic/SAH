@@ -60,7 +60,8 @@ class Šah:
         self.postavi_figure()
 
     def odgovor_na_klik(self, i, j):
-        '''Se odloči, kako bo odgovoril na klik.'''
+        '''Vhodni argumenti: i - vrstica, od zgoraj; j - stolpec, od zgoraj.
+        Določi odgovor na klik.'''
 
         # označi figuro
         if self.oznacena_figura is None: # ni bila še nobena označena
