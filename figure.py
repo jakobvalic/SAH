@@ -19,24 +19,36 @@ class Figura:
 class Kralj:
     '''Eden in edini.'''
 
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\kralj_{}.png".format(self.barva))
+        self.id_slike = None
+
+    def __repr__(self):
+        return 'Kralj'
 
 
 
 class Dama:
     '''Ko življenje postane razburljivo.'''
 
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\dama_{}.png".format(self.barva))
+        self.id_slike = None
+
+    def __repr__(self):
+        return 'Dama'
 
 
 class Konj:
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\konj_{}.png".format(self.barva))
+        self.id_slike = None
         print('zameril si se mi, KONJ!')
 
 
@@ -45,9 +57,11 @@ class Konj:
 
 
 class Lovec:
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\lovec_{}.png".format(self.barva))
+        self.id_slike = None
         print('sezona lova')
 
     def __repr__(self):
@@ -57,21 +71,26 @@ class Lovec:
 
 
 class Trdnjava:
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         print('težko topništvo')
+
 
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\trdnjava_{}.png".format(self.barva))
+        self.id_slike = None
 
     def __repr__(self):
         return 'Trdnjava'
 
 
 class Kmet:
-    def __init__(self, barva):
+    def __init__(self, barva, polozaj):
+        self.polozaj = polozaj
         print('kmetov mnogo')
         self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\kmet_{}.png".format(self.barva))
+        self.id_slike = None
 
     def __repr__(self):
         return 'Kmet'
