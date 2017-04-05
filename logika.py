@@ -1,15 +1,18 @@
 # logika igre
-# tukaj se ZARES DOGAJA :)
+# Tukaj se preverja stanje igre in veljavnost potez. Tukaj se ZARES DOGAJA :)
 
 from figure import *
 
 class Šah:
     '''Kraljevska igra kraljev.'''
 
-
     def __init__(self):
 
-        # self.sahovnica = sahovnica.Sahovnica
+        self.zacni_igro()
+
+
+    def zacni_igro(self):
+        '''Začetno stanje igre.'''
 
         # bele figure
         K = Kralj('beli', (7, 4))
@@ -40,14 +43,15 @@ class Šah:
         self.rosada_c2 = True
 
 
-        self.poteza = 0 # šteje poteze
+        # self.poteza = 0
+        self.na_potezi = 'beli'
+        self.konec_igre = False
         self.dovoljene_poteze_nasprotnika = [] # tja se naš kralj ne sme premakniti
-        self.dovoljene_poteze = [(i, j) for i in range(8) for j in range(8)] # na začetku, za lažje premikanje :)
+        # self.dovoljene_poteze = [(i, j) for i in range(8) for j in range(8)] # na začetku, za lažje premikanje :)
         self.oznacena_figura = None
 
 
 
-        
         # matrika s trenutno pozicijo
         self.IGRA = [
             [T1_ , S1_ , L1_ , D_  , K_  , L2_ , S2_ , T2_ ],
@@ -61,92 +65,72 @@ class Šah:
         [print(i) for i in self.IGRA]
 
 
-    def odgovor_na_klik(self, i, j):
-        '''Vhodni argumenti: i - vrstica, od zgoraj; j - stolpec, od zgoraj.
-        Določi odgovor na klik.'''
 
-        mesto = self.IGRA[i][j]
+    def lahko_oznacimo(self, i, j):
+        '''Vrne True, če smemo označiti željeno figuro, False sicer.'''
+        zeljena_figura = self.IGRA[i][j]
+        if zeljena_figura is None:  # smo kliknili 'v prazno':
+            return False
+        if zeljena_figura.barva != self.na_potezi:
+            return False
+        # se pozanimamo, če smo v šahu, ga moramo preprečit: ali ima figura, ki jo želimo označiti, kaj možnosti, da to doseže?
 
-        if self.oznacena_figura is None: # klik1
-            if mesto is not None: # ni kliknil na prazno polje
-                # označimo figuro
-                self.oznacena_figura = mesto
-
-                # sporočiš veljavna polja, GUI pobarva polja
-
-
-        else: # klik2
-            if (i, j) in self.dovoljene_poteze:
-                # izvede premik
-                povleci_potezo(self.oznacena_figura, i, j)
-
-                # logika spremeni self.IGRO
-                self.oznacena_figura.x = j
-                self.oznacena_figura.y = i
-                # pokliči GUI, da se poteza nariše
-
-                # daj potezo nasprotniku
+        return True
 
 
-            # če poteza ni veljavna, odznači figuro
-            else:
-                self.oznacena_figura = None
+    def je_poteza_veljavna(self, i, j):
+        '''Vrne dovoljene poteze z ozirom na označeno figuro.'''
+        barva = self.oznacena_figura.barva
+        if self.IGRA[i][j] is not None:
+            if self.IGRA[i][j].barva == barva:
+                return False
+        return True
 
 
-
-        
-
-    def na_potezi(self):
-        '''Vrne, kdo je trenutno na potezi.'''
-        if self.poteza is None:
-            return 'konec igre'
-        if self.poteza % 2 == 0:
-            return 'beli'
-        return 'črni'
-
-    def veljavne_poteze(self):
-        pass
-
-        '''Osveži seznam vseh veljavnih potez igralca, ki je na vrsti.'''
-        veljavne_poteze = []
-        for i in range(7):
-            for j in range(7): # gremo čez vsako polje v šahovnici
-                na_potezi = na_potezi(self)
-                figura = self.IGRA[i][j]
-                if figura is not None:
-                    if figura.barva == na_potezi:
-                        veljavne_poteze.append(figura.veljavne_poteze)
-        self.veljavne_poteze.extend(veljavne_poteze)
-
-    def premakni_figuro(self, oznacena_figura, i, j):
+    def premakni_figuro(self, novi_i, novi_j):
         '''Premakne figuro v matriki igre.'''
-        # polje, ki ga je figura zapustila, je prazno
-        stari_i, stari_j = oznacena_figura.polozaj
-        self.IGRA[stari_i][stari_j] = None
-        # premaknemo na novi koordinati
-        self.IGRA[i][j] = oznacena_figura
+        '''Najprej se pozanima, ali jo je mogoče premakniti.'''
+        stari_i, stari_j = self.oznacena_figura.polozaj
+        self.IGRA[stari_i][stari_j] = None # polje, ki ga je figura zapustila, je prazno
+        self.oznacena_figura.polozaj = (novi_i, novi_j) # nastavimo figuri novi koordinati
+        self.IGRA[novi_i][novi_j] = self.oznacena_figura # premaknemo na novi koordinati v matriki IGRE
+
+        # self.IGRA[novi_i][novi_j] = None # da zbrišemo prejšnjo figuro, ampak to je v resnici ne izbriše, kajne??? KAKO SE V RESNICI ZBRIŠE RAZRED???
+
+        self.na_potezi = 'crni' if self.na_potezi == 'beli' else 'beli'
+        print(self.na_potezi)
 
 
 
+
+
+
+
+#################################################################################3
+##      spodnje funkcije potrebujejo dopolnitev, spremembo ali so odveč        ##3
+#################################################################################3
+
+
+def veljavne_poteze(self):
+    '''Osveži seznam vseh veljavnih potez igralca, ki je na vrsti.'''
+    veljavne_poteze = []
+    for i in range(7):
+        for j in range(7):  # gremo čez vsako polje v šahovnici
+            na_potezi = na_potezi(self)
+            figura = self.IGRA[i][j]
+            if figura is not None:
+                if figura.barva == na_potezi:
+                    veljavne_poteze.append(figura.veljavne_poteze)
+    self.veljavne_poteze.extend(veljavne_poteze)
 
 
 
             
 
-    def povleci_potezo(self, figura, i, j, poteza): # preveč: položaj lahko izvemo iz figure
-        '''Spremeni matriko IGRA.'''
-        novi_i, novi_j = poteza
-        # spremenimo stanje v matriki
-        self.IGRA[i][j] = None
-        self.IGRA[novi_i][novi_j] = figura
 
-        # sporočimo GUI-ju, naj potezo nariše
-        
 
-        # povečamo števec potez in ponastavimo seznam dovoljenih potez
-        self.dovoljene_poteze_nasprotnika = self.dovoljene_poteze.copy()
-        self.dovoljene_poteze = []
-        self.poteza += 1
+
+
         
 
      

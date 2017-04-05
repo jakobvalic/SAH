@@ -1,5 +1,5 @@
 # šahovnica
-# GUI: tukaj se zgolj riše in zaznava klike !!!
+# GUI: tukaj se riše in zaznava klike, za pravila povprašamo logiko
 
 
 import tkinter as tk
@@ -12,7 +12,7 @@ def narisi_sahovnico(platno, velikost_polj, odmik):
     for i in range(8): # vrstice
         for j in range(8): # stolpci
             barva = "white" if (i + j) % 2 == 0 else "gray"
-            platno.create_rectangle(x1, y1, x1 + velikost_polj, y1 + velikost_polj, fill=barva, activefill="blue")
+            platno.create_rectangle(x1, y1, x1 + velikost_polj, y1 + velikost_polj, fill=barva)
             x1 += velikost_polj # naslednji kvadratek v vrsti
         x1, y1 = odmik, odmik + velikost_polj * (i + 1) # premaknemo se eno vrstico navzdol
 
@@ -30,15 +30,9 @@ class Sahovnica:
 
         self.sah = logika.Šah()
         self.IGRA = self.sah.IGRA
+
         self.oznacena_figura = None
 
-
-        # PRIPOROČILA PROFESORJA:
-        # matrika je zaradi rekonstrukcije, zato da programer vidi, kaj se dogaja
-        # IGRA v logiki
-        # najprej spremeniš v logiki, nato sporočiš GUI, da nariše drugam
-        # class Figura: x, y, barva -> kar je skupno vsem figuram
-        # class Kmet(Figura): mozne poteze, slika
 
 
         # narišemo šahovnico
@@ -48,6 +42,7 @@ class Sahovnica:
         self.platno.bind('<Button-1>', self.klik)
 
         # naredimo oznako za izpisovanje
+
         okvir_oznake = tk.LabelFrame(self.platno)
         okvir_oznake.pack() 
         self.izpis_potez = tk.StringVar(value='klikni nekam')
@@ -55,44 +50,47 @@ class Sahovnica:
         oznaka_izpis_potez.pack()
         x, y = self.odmik + 8 * self.velikost_polj / 2, self.odmik / 2
         self.platno.create_window(x, y, window=okvir_oznake, width = 140)
+        # self.platno.create_text(600, 20, text=self.izpis_potez.get()) ZAKAJ SE TO NE SPREMINJA?
 
-        self.začni_igro()
+
+        self.zacni_igro()
 
 
     def klik(self, event):
         '''Zazna klik in to sporoči logiki igre.'''
 
-
-
         # najprej pridobi koordinate
         i = int((event.y - self.odmik) // self.velikost_polj) # vrstica
         j = int((event.x - self.odmik) // self.velikost_polj) # stolpec
+        # stolpci = 'ABCDEFGH'
+        # self.izpis_potez.set('Kliknil si na {}{}.'.format(stolpci[j], 7 - i + 1))
 
-        stolpci = 'ABCDEFGH'
-        if 0 <= i <= 7 and 0 <= j <= 7:
-            self.izpis_potez.set('Kliknil si na {}{}.'.format(stolpci[j], 7 - i + 1))
-            # poda sporočilo logiki igre !!!
-            # self.sah.odgovor_na_klik(i, j)
 
+        if not(0 <= i <= 7 and 0 <= j <= 7): # klik izven šahovnice
+            return
+
+        if self.sah.konec_igre:
+            return
 
         if self.oznacena_figura is None:
             # jo označimo
-            if self.IGRA[i][j] is not None: # nismo kliknili 'v prazno':
+            if self.sah.lahko_oznacimo(i, j):
                 self.oznacena_figura = self.IGRA[i][j]
+                self.sah.oznacena_figura = self.oznacena_figura # prenesemo informacijo
                 # sedaj tudi pobarvamo polje z označeno figuro
                 self.oznaceno_polje = self.platno.find_overlapping(event.x, event.y, event.x + 1, event.y + 1)[0]
+                self.barva_oznacenega_polja = self.platno.itemcget(self.oznaceno_polje, "fill")
                 self.platno.itemconfig(self.oznaceno_polje, fill="blue")
                 self.oznacena_figura = self.IGRA[i][j]
                 # povemo logiki, katero figuro smo označili; logika vrne možne poteze in pokliče metodo za barvanje kvadratkov
 
         else:
             # ponastavimo barvo polja :)
-            barva_polja = "white" if (i + j) % 2 == 1 else "gray"
-            self.platno.itemconfig(self.oznaceno_polje, fill=barva_polja)
-            if (i, j) in self.sah.dovoljene_poteze:
+            self.platno.itemconfig(self.oznaceno_polje, fill=self.barva_oznacenega_polja) # lahko bi tudi z (i + j) % 2, ko bi za i in j vprašal označeno figuro
+            if self.sah.je_poteza_veljavna(i, j):
                 # sporočimo logiki, da se je nekaj spremenilo
-                self.sah.premakni_figuro(self.oznacena_figura, i, j)
-                # pobrišemo prejšnjo sliko figure
+                self.sah.premakni_figuro(i, j)
+                self.izpis_potez.set('Na vrsti je {}.'.format(self.sah.na_potezi))
 
 
                 # premaknemo sliko figure na novi koordinati
@@ -111,41 +109,18 @@ class Sahovnica:
             # odznačimo figuro
             self.oznacena_figura = None
 
+            print('nova poteza')
+            for i in range(8):
+                print(self.IGRA[i])
 
 
 
-
-        # kar smo delali na vajah
-
-
-        # self.oznaceno_polje = self.platno.find_overlapping(event.x, event.y, event.x + 1, event.y + 1)[0]
-        # self.oznacena_figura = self.IGRA[i][j]
-        # print(self.oznacena_figura)
-        # if self.oznacena_figura is not None: # označimo figuo
-        #     # pobarvamo polje z označeno figuro
-        #     self.platno.itemconfig(self.oznaceno_polje, fill="blue")
-        #     # sedaj se pozanimamo, kakšne poteze lahko opravi
-
-
-        # ob naslednjem kliku (bodisi premik ali napačna izbira) nazaj nastavimo barvo polja
-
-
-
-
-
-    def začni_igro(self):
+    def zacni_igro(self):
         '''Prične igro.'''
         self.prikaz_figur()
-  
-        
+        # nastavi odštevalnik ure
+
     
-
-
-
-
-
-
-
     def prikaz_figur(self):
         '''Na šahovnici prikaže figure.'''
         for i in range(8):
@@ -162,8 +137,16 @@ class Sahovnica:
 
 root = tk.Tk()
 
-pratija_saha = Sahovnica(root)
+partija_saha = Sahovnica(root)
 
 root.mainloop()
 
 
+#===========================================================#
+#                  NASVETI PROFESORJA                       #
+#===========================================================#
+# matrika je zaradi rekonstrukcije, zato da programer vidi, kaj se dogaja
+# IGRA v logiki
+# najprej spremeniš v logiki, nato sporočiš GUI, da nariše drugam
+# class Figura: x, y, barva -> kar je skupno vsem figuram
+# class Kmet(Figura): mozne poteze, slika
