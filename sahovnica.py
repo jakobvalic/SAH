@@ -6,18 +6,7 @@ import tkinter as tk
 import logika
 
 
-def narisi_sahovnico(platno, velikost_polj, odmik):
-    '''Nariše šahovnico 8d X 8d. Desno spodaj je belo polje.'''
-    x1, y1 = odmik, odmik # določimo odmik
-    matrika_id = [[None for i in range(8)] for j in range(8)]
-    for i in range(8): # vrstice
-        for j in range(8): # stolpci
-            barva = "white" if (i + j) % 2 == 0 else "gray"
-            id_polja = platno.create_rectangle(x1, y1, x1 + velikost_polj, y1 + velikost_polj, fill=barva)
-            matrika_id[i][j] = id_polja
-            x1 += velikost_polj # naslednji kvadratek v vrsti
-        x1, y1 = odmik, odmik + velikost_polj * (i + 1) # premaknemo se eno vrstico navzdol
-    return matrika_id
+
 
 
 
@@ -39,7 +28,7 @@ class Sahovnica:
 
 
         # narišemo šahovnico
-        self.polja = narisi_sahovnico(self.platno, self.velikost_polj, self.odmik)
+        self.polja = self.narisi_sahovnico()
 
         self.oznacena_polja = []
 
@@ -50,16 +39,27 @@ class Sahovnica:
 
         okvir_oznake = tk.LabelFrame(self.platno)
         okvir_oznake.pack() 
-        self.izpis_potez = tk.StringVar(value='klikni nekam')
+        self.izpis_potez = tk.StringVar(value='Na potezi je beli.')
         oznaka_izpis_potez = tk.Label(okvir_oznake, textvariable=self.izpis_potez)
         oznaka_izpis_potez.pack()
         x, y = self.odmik + 8 * self.velikost_polj / 2, self.odmik / 2
         self.platno.create_window(x, y, window=okvir_oznake, width = 140)
         # self.platno.create_text(600, 20, text=self.izpis_potez.get()) ZAKAJ SE TO NE SPREMINJA?
 
-
         self.zacni_igro()
 
+    def narisi_sahovnico(self):
+        '''Nariše šahovnico 8d X 8d. Desno spodaj je belo polje.'''
+        x1, y1 = self.odmik, self.odmik  # določimo odmik
+        matrika_id = [[None for i in range(8)] for j in range(8)]
+        for i in range(8):  # vrstice
+            for j in range(8):  # stolpci
+                barva = "white" if (i + j) % 2 == 0 else "gray"
+                id_polja = self.platno.create_rectangle(x1, y1, x1 + self.velikost_polj, y1 + self.velikost_polj, fill=barva)
+                matrika_id[i][j] = id_polja
+                x1 += self.velikost_polj  # naslednji kvadratek v vrsti
+            x1, y1 = self.odmik, self.odmik + self.velikost_polj * (i + 1)  # premaknemo se eno vrstico navzdol
+        return matrika_id
 
     def klik(self, event):
         '''Zazna klik in to sporoči logiki igre.'''
@@ -78,23 +78,23 @@ class Sahovnica:
             return
 
         if self.sah.oznacena_figura is None:
-            # jo označimo
+            # jo označimo, če lahko
             if self.sah.lahko_oznacimo(i, j):
-                # označimo figuro
-                self.sah.oznacena_figura = self.IGRA[i][j]
                 print(self.sah.oznacena_figura)
 
+                # jo označimo
+                self.sah.oznacena_figura = self.IGRA[i][j]
 
                 # pobarvamo polje, ki smo ga označili
                 polje = self.polja[i][j]
-                self.platno.itemconfig(polje, fill="blue")
+                self.platno.itemconfig(polje, fill="yellow")
 
 
                 # pobarvamo možne poteze
                 for poteza in self.sah.veljavne_poteze():
                     i_polja, j_polja = poteza
                     self.oznacena_polja.append(poteza)
-                    self.platno.itemconfig(self.polja[i_polja][j_polja], fill="green")
+                    self.platno.itemconfig(self.polja[i_polja][j_polja], fill="blue")
 
                 # zmeraj preverjamo, ali je kralj v dosegu možnih potez
 
@@ -104,6 +104,7 @@ class Sahovnica:
             barva = "white" if (i_stari + j_stari) % 2 == 0 else "gray"
             self.platno.itemconfig(self.polja[i_stari][j_stari], fill=barva) # lahko bi tudi z (i + j) % 2, ko bi za i in j vprašal označeno figuro
 
+            # ponastavimo barvo možnih polj
             for poteza in self.oznacena_polja:
                 i_polja, j_polja = poteza
                 barva = "white" if (i_polja + j_polja) % 2 == 0 else "gray"
@@ -112,24 +113,24 @@ class Sahovnica:
 
 
 
-            if (i, j) in self.sah.veljavne_poteze(): # and self.sah.je_poteza_veljavna(i, j)
-
-
-
+            if (i, j) in self.sah.veljavne_poteze():
 
                 # sporočimo logiki, da se je nekaj spremenilo
                 self.sah.premakni_figuro(i, j)
-                self.izpis_potez.set('Na vrsti je {}.'.format(self.sah.na_potezi))
+                self.sah.zamenjaj_igralca()
+                self.izpis_potez.set('Na potezi je {}.'.format(self.sah.na_potezi))
 
 
                 # premaknemo sliko figure na novi koordinati
                 x = self.odmik + (j * self.velikost_polj) + self.velikost_polj / 2 # centriramo klik
                 y = self.odmik + (i * self.velikost_polj) + self.velikost_polj / 2
+
                 # če je na polju kakšna druga figura, jo 'pojemo'
                 if self.IGRA[i][j] is not None:
                     nasprotna_figura = self.IGRA[i][j]
                     id_slike = nasprotna_figura.id_slike
                     self.platno.delete(id_slike)
+
                 # narišemo novo sliko in shranimo nov id_slike
                 foto = self.sah.oznacena_figura.foto
                 id_slike = self.platno.create_image(x, y, image=foto)
