@@ -2,40 +2,141 @@
 
 import tkinter as tk
 
+
+def je_v_polju(poteza):
+    '''Preveri, ali je poteza v polju.'''
+    x, y = poteza
+    return 0 <= min(x, y) <= max(x, y) <= 7
+
+def figura_istega(figura, poteza, IGRA):
+    '''Vrne True, je na polju figura iste barve.'''
+    i, j = poteza
+    if IGRA[i][j] is not None:
+        return figura.barva == IGRA[i][j].barva
+    return False
+
+
 class Figura:
-    '''Lesena.'''
     # vsebuje lastnosti, skupne vsem figuram; njeni podrazredi so posamezne figure
 
-    def __init__(self, igra, barva, polozaj):
-        self.IGRA = igra  # da izvemo položaj drugih figur -> za določanje veljavnih potez
+    def __init__(self, barva, polozaj):
         self.barva = barva
         self.polozaj = polozaj
+
 
     def vrni_barvo(self):
         return self.barva
 
+    def veljavne_poteze(self, IGRA):
+        '''Vrne seznam veljavnih potez glede na pozicijo.'''
+        veljavne = []
+        for vektor in self.vektorji:
+            x, y = self.polozaj
+            x += vektor[0]
+            y += vektor[1]
+            while je_v_polju((x, y)):
+                if IGRA[x][y] is not None:
+                    if IGRA[x][y].barva == self.barva:
+                        break
+                    else:  # nasprotno figuro lahko pojemo
+                        veljavne.append((x, y))
+                        break
+                veljavne.append((x, y))
+                x += vektor[0]
+                y += vektor[1]
+        print('Veljavne trdnjava:', veljavne)
+        return veljavne
 
 
-class Kralj:
-    '''Eden in edini.'''
-
+class Konj(Figura):
     def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        self.barva = barva
+        Figura.__init__(self, barva, polozaj)
+        self.vektorji = [(1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1), (2, 1)]
+
+        self.foto = tk.PhotoImage(file=r"slike_figur\konj_{}.png".format(self.barva))
+        self.id_slike = None
+
+    def __repr__(self):
+        return 'Konj'
+
+    def veljavne_poteze(self, IGRA):
+        veljavne = []
+        for vektor in self.vektorji:
+            x, y = self.polozaj
+            nov_x = x + vektor[0]
+            nov_y = y + vektor[1]
+            if je_v_polju((nov_x, nov_y)):
+                if not figura_istega(self, (nov_x, nov_y), IGRA):
+                    veljavne.append((nov_x, nov_y))
+        return veljavne
+
+
+class Kmet(Figura):
+    def __init__(self, barva, polozaj):
+        Figura.__init__(self, barva, polozaj)
+        self.vektor = (-1,0) if self.barva == 'beli' else (1,0)
+
+        self.foto = tk.PhotoImage(file=r"slike_figur\kmet_{}.png".format(self.barva))
+        self.id_slike = None
+
+
+    def __repr__(self):
+        return 'Kmet'
+
+    def veljavne_poteze(self, IGRA):
+        '''Veljavni premiki kmeta.'''
+        naprej = self.vektor[0]
+        veljavne = []
+        # ena naprej
+        x, y = self.polozaj
+        if IGRA[x + naprej][y] is None:
+            veljavne.append((x + naprej, y))
+            if IGRA[x + 2*naprej][y] is None:
+                zacetek = 6 if self.barva == 'beli' else 1
+                if x == zacetek: # če sta v začetnih vrstah
+                    veljavne.append((x + 2*naprej, y))
+        # vstran
+        if je_v_polju((x + naprej, y + 1)):
+            if not figura_istega(self, (x + naprej, y + 1), IGRA) and IGRA[x + naprej][y + 1] is not None:
+                veljavne.append((x + naprej, y  + 1))
+        if je_v_polju((x + naprej, y - 1)):
+            if not figura_istega(self, (x + naprej, y - 1), IGRA) and IGRA[x + naprej][y - 1] is not None:
+                veljavne.append((x + naprej, y - 1))
+        return veljavne
+
+
+
+
+
+class Kralj(Figura):
+    def __init__(self, barva, polozaj):
+        Figura.__init__(self, barva, polozaj)
+        self.vektorji = [(-1, 1), (1, 1), (-1, -1), (1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
+
         self.foto = tk.PhotoImage(file=r"slike_figur\kralj_{}.png".format(self.barva))
         self.id_slike = None
 
     def __repr__(self):
         return 'Kralj'
 
+    def veljavne_poteze(self, IGRA): # povozimo metodo iz Figure
+        '''Vrne seznam dovoljenih potez za kralja.'''
+        veljavne = []
+        print('KRALJ KRALJ KRALJ')
+        for vektor in self.vektorji:
+            x, y = self.polozaj
+            x += vektor[0]
+            y += vektor[1]
+            if je_v_polju((x, y)):
+                if not figura_istega(self, (x,y), IGRA):
+                    veljavne.append((x, y))
+        return veljavne
 
-
-class Dama:
-    '''Ko življenje postane razburljivo.'''
-
+class Dama(Figura):
     def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        self.barva = barva
+        Figura.__init__(self, barva, polozaj)
+        self.vektorji = [(-1, 1), (1, 1), (-1, -1), (1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
+
         self.foto = tk.PhotoImage(file=r"slike_figur\dama_{}.png".format(self.barva))
         self.id_slike = None
 
@@ -43,40 +144,25 @@ class Dama:
         return 'Dama'
 
 
-class Konj:
+class Lovec(Figura):
     def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        self.barva = barva
-        self.foto = tk.PhotoImage(file=r"slike_figur\konj_{}.png".format(self.barva))
-        self.id_slike = None
-        print('zameril si se mi, KONJ!')
+        Figura.__init__(self, barva, polozaj)
+        self.vektorji = [(-1,-1), (1,1), (1,-1), (-1,1)]
 
 
-    def __repr__(self):
-        return 'Konj'
-
-
-class Lovec:
-    def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\lovec_{}.png".format(self.barva))
         self.id_slike = None
-        print('sezona lova')
+
 
     def __repr__(self):
         return 'Lovec'
 
 
-
-
-class Trdnjava:
+class Trdnjava(Figura):
     def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        print('težko topništvo')
+        Figura.__init__(self, barva, polozaj)
+        self.vektorji = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-
-        self.barva = barva
         self.foto = tk.PhotoImage(file=r"slike_figur\trdnjava_{}.png".format(self.barva))
         self.id_slike = None
 
@@ -84,16 +170,19 @@ class Trdnjava:
         return 'Trdnjava'
 
 
-class Kmet:
-    def __init__(self, barva, polozaj):
-        self.polozaj = polozaj
-        print('kmetov mnogo')
-        self.barva = barva
-        self.foto = tk.PhotoImage(file=r"slike_figur\kmet_{}.png".format(self.barva))
-        self.id_slike = None
 
-    def __repr__(self):
-        return 'Kmet'
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # class Konj(Figura):
@@ -107,7 +196,7 @@ class Kmet:
 #################################################################################3
 
 
-#=====================================================================# prvi poskusi
+# =====================================================================# prvi poskusi
 
 polozaj_lastnih = [(1, 1)]
 polozaj_nasprotnih = [(2, 2), (4, 4)]
@@ -118,12 +207,6 @@ def lastne_ovire(zeljena_poteza, polozaj_lastnih):
     if zeljena_poteza in polozaj_lastnih:
         return False
     return True
-
-
-def je_v_polju(poteza):
-    '''Preveri, ali je poteza v polju.'''
-    x, y = poteza
-    return 0 <= min(x, y) <= max(x, y) <= 7
 
 
 ##class Konj:
@@ -305,28 +388,3 @@ polozaj3 = (4, 4)
 
 
 # šah = Šah('šahovnica')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

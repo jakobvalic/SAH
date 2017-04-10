@@ -9,12 +9,15 @@ import logika
 def narisi_sahovnico(platno, velikost_polj, odmik):
     '''Nariše šahovnico 8d X 8d. Desno spodaj je belo polje.'''
     x1, y1 = odmik, odmik # določimo odmik
+    matrika_id = [[None for i in range(8)] for j in range(8)]
     for i in range(8): # vrstice
         for j in range(8): # stolpci
             barva = "white" if (i + j) % 2 == 0 else "gray"
-            platno.create_rectangle(x1, y1, x1 + velikost_polj, y1 + velikost_polj, fill=barva)
+            id_polja = platno.create_rectangle(x1, y1, x1 + velikost_polj, y1 + velikost_polj, fill=barva)
+            matrika_id[i][j] = id_polja
             x1 += velikost_polj # naslednji kvadratek v vrsti
         x1, y1 = odmik, odmik + velikost_polj * (i + 1) # premaknemo se eno vrstico navzdol
+    return matrika_id
 
 
 
@@ -31,12 +34,14 @@ class Sahovnica:
         self.sah = logika.Šah()
         self.IGRA = self.sah.IGRA
 
-        self.oznacena_figura = None
+
 
 
 
         # narišemo šahovnico
-        narisi_sahovnico(self.platno, self.velikost_polj, self.odmik)
+        self.polja = narisi_sahovnico(self.platno, self.velikost_polj, self.odmik)
+
+        self.oznacena_polja = []
 
         # registriramo se za klike z miško
         self.platno.bind('<Button-1>', self.klik)
@@ -72,22 +77,46 @@ class Sahovnica:
         if self.sah.konec_igre:
             return
 
-        if self.oznacena_figura is None:
+        if self.sah.oznacena_figura is None:
             # jo označimo
             if self.sah.lahko_oznacimo(i, j):
-                self.oznacena_figura = self.IGRA[i][j]
-                self.sah.oznacena_figura = self.oznacena_figura # prenesemo informacijo
-                # sedaj tudi pobarvamo polje z označeno figuro
-                self.oznaceno_polje = self.platno.find_overlapping(event.x, event.y, event.x + 1, event.y + 1)[0]
-                self.barva_oznacenega_polja = self.platno.itemcget(self.oznaceno_polje, "fill")
-                self.platno.itemconfig(self.oznaceno_polje, fill="blue")
-                self.oznacena_figura = self.IGRA[i][j]
-                # povemo logiki, katero figuro smo označili; logika vrne možne poteze in pokliče metodo za barvanje kvadratkov
+                # označimo figuro
+                self.sah.oznacena_figura = self.IGRA[i][j]
+                print(self.sah.oznacena_figura)
+
+
+                # pobarvamo polje, ki smo ga označili
+                polje = self.polja[i][j]
+                self.platno.itemconfig(polje, fill="blue")
+
+
+                # pobarvamo možne poteze
+                for poteza in self.sah.veljavne_poteze():
+                    i_polja, j_polja = poteza
+                    self.oznacena_polja.append(poteza)
+                    self.platno.itemconfig(self.polja[i_polja][j_polja], fill="green")
+
+                # zmeraj preverjamo, ali je kralj v dosegu možnih potez
 
         else:
-            # ponastavimo barvo polja :)
-            self.platno.itemconfig(self.oznaceno_polje, fill=self.barva_oznacenega_polja) # lahko bi tudi z (i + j) % 2, ko bi za i in j vprašal označeno figuro
-            if self.sah.je_poteza_veljavna(i, j):
+            # ponastavimo barvo polja označene figure
+            i_stari, j_stari = self.sah.oznacena_figura.polozaj
+            barva = "white" if (i_stari + j_stari) % 2 == 0 else "gray"
+            self.platno.itemconfig(self.polja[i_stari][j_stari], fill=barva) # lahko bi tudi z (i + j) % 2, ko bi za i in j vprašal označeno figuro
+
+            for poteza in self.oznacena_polja:
+                i_polja, j_polja = poteza
+                barva = "white" if (i_polja + j_polja) % 2 == 0 else "gray"
+                self.platno.itemconfig(self.polja[i_polja][j_polja], fill = barva)
+
+
+
+
+            if (i, j) in self.sah.veljavne_poteze(): # and self.sah.je_poteza_veljavna(i, j)
+
+
+
+
                 # sporočimo logiki, da se je nekaj spremenilo
                 self.sah.premakni_figuro(i, j)
                 self.izpis_potez.set('Na vrsti je {}.'.format(self.sah.na_potezi))
@@ -102,12 +131,12 @@ class Sahovnica:
                     id_slike = nasprotna_figura.id_slike
                     self.platno.delete(id_slike)
                 # narišemo novo sliko in shranimo nov id_slike
-                foto = self.oznacena_figura.foto
+                foto = self.sah.oznacena_figura.foto
                 id_slike = self.platno.create_image(x, y, image=foto)
-                self.oznacena_figura.id_slike = id_slike
+                self.sah.oznacena_figura.id_slike = id_slike
 
             # odznačimo figuro
-            self.oznacena_figura = None
+            self.sah.oznacena_figura = None
 
             print('nova poteza')
             for i in range(8):

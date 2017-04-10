@@ -47,7 +47,6 @@ class Šah:
         self.na_potezi = 'beli'
         self.konec_igre = False
         self.dovoljene_poteze_nasprotnika = [] # tja se naš kralj ne sme premakniti
-        # self.dovoljene_poteze = [(i, j) for i in range(8) for j in range(8)] # na začetku, za lažje premikanje :)
         self.oznacena_figura = None
 
 
@@ -55,7 +54,7 @@ class Šah:
         # matrika s trenutno pozicijo
         self.IGRA = [
             [T1_ , S1_ , L1_ , D_  , K_  , L2_ , S2_ , T2_ ],
-            [k1_ , k2_ , k3_ , k4_ , k5_ , k6_ , k7_ , k8_ ],
+            [k1_ , k2_ , k3_ , k4_ , k5_ , k6_ , k7_ , k8_],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
@@ -78,13 +77,17 @@ class Šah:
         return True
 
 
-    def je_poteza_veljavna(self, i, j):
-        '''Vrne dovoljene poteze z ozirom na označeno figuro.'''
-        barva = self.oznacena_figura.barva
-        if self.IGRA[i][j] is not None:
-            if self.IGRA[i][j].barva == barva:
-                return False
-        return True
+    # def je_poteza_veljavna(self, i, j):
+    #     '''Vrne dovoljene poteze z ozirom na označeno figuro.'''
+    #     barva = self.oznacena_figura.barva
+    #     if self.IGRA[i][j] is not None:
+    #         if self.IGRA[i][j].barva == barva:
+    #             return False
+    #     return True
+
+    def veljavne_poteze(self):
+        '''Vrne seznam parov (i,j) veljavnih potez.'''
+        return self.oznacena_figura.veljavne_poteze(self.IGRA)
 
 
     def premakni_figuro(self, novi_i, novi_j):
