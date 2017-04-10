@@ -53,7 +53,7 @@ class Konj(Figura):
         Figura.__init__(self, barva, polozaj)
         self.vektorji = [(1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1), (2, 1)]
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\konj_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\konj_{}.gif".format(self.barva))
         self.id_slike = None
 
     def __repr__(self):
@@ -76,7 +76,7 @@ class Kmet(Figura):
         Figura.__init__(self, barva, polozaj)
         self.vektor = (-1,0) if self.barva == 'beli' else (1,0)
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\kmet_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\kmet_{}.gif".format(self.barva))
         self.id_slike = None
 
 
@@ -113,7 +113,7 @@ class Kralj(Figura):
         Figura.__init__(self, barva, polozaj)
         self.vektorji = [(-1, 1), (1, 1), (-1, -1), (1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\kralj_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\kralj_{}.gif".format(self.barva))
         self.id_slike = None
 
     def __repr__(self):
@@ -137,7 +137,7 @@ class Dama(Figura):
         Figura.__init__(self, barva, polozaj)
         self.vektorji = [(-1, 1), (1, 1), (-1, -1), (1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\dama_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\dama_{}.gif".format(self.barva))
         self.id_slike = None
 
     def __repr__(self):
@@ -150,7 +150,7 @@ class Lovec(Figura):
         self.vektorji = [(-1,-1), (1,1), (1,-1), (-1,1)]
 
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\lovec_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\lovec_{}.gif".format(self.barva))
         self.id_slike = None
 
 
@@ -163,7 +163,7 @@ class Trdnjava(Figura):
         Figura.__init__(self, barva, polozaj)
         self.vektorji = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-        self.foto = tk.PhotoImage(file=r"slike_figur\trdnjava_{}.png".format(self.barva))
+        self.foto = tk.PhotoImage(file=r"slike_figur\trdnjava_{}.gif".format(self.barva))
         self.id_slike = None
 
     def __repr__(self):
