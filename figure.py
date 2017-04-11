@@ -164,6 +164,13 @@ class Kralj(Figura):
                     if IGRA[x][y].barva != self.barva:
                         if IGRA[x][y].vrsta == "konj":
                             return True
+        # šah zaradi kmeta
+        x, y = self.polozaj
+        vektor = 1 if self.barva == 'crni' else -1
+        if je_v_polju((x + vektor, y + 1)) and IGRA[x + vektor][y + 1] is not None and IGRA[x + vektor][y + 1].barva != self.barva and IGRA[x + vektor][y + 1].vrsta == 'kmet':
+            return True
+        if je_v_polju((x + vektor, y - 1)) and IGRA[x + vektor][y - 1] is not None and IGRA[x + vektor][y - 1].barva != self.barva and IGRA[x + vektor][y - 1].vrsta == 'kmet':
+            return True
         return False
 
 
