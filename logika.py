@@ -1,4 +1,5 @@
 import logging
+from promocija import Promocija
 
 KRALJ = 'kralj'
 KRALJICA = 'kraljica'
@@ -78,15 +79,15 @@ class Kralj(Figura):
 
     def dovoljeni_premiki(self, igra, i, j):
         '''Premiki kralja.'''
-        # Kratka rošada
-        vrsta = 0 if igra.na_vrsti == CRNI else 7
-        rosada_kratka = igra.rosada_beli_kratka if igra.na_vrsti == BELI else igra.rosada_crni_kratka
-        if rosada_kratka and igra.plosca[vrsta][5] == PRAZNO and igra.plosca[vrsta][6] == PRAZNO:
-            yield ((vrsta, 6))
-        # Dolga rošada
-        rosada_dolga = igra.rosada_beli_dolga if igra.na_vrsti == BELI else igra.rosada_crni_dolga
-        if rosada_dolga and igra.plosca[vrsta][3] == PRAZNO and igra.plosca[vrsta][2] == PRAZNO:
-            yield ((vrsta, 2))
+        if igra.dovoli_rosado(igra.na_vrsti):
+            vrsta = 0 if igra.na_vrsti == CRNI else 7
+            rosada_kratka = igra.rosada_beli_kratka if igra.na_vrsti == BELI else igra.rosada_crni_kratka
+            if rosada_kratka and igra.plosca[vrsta][5] == PRAZNO and igra.plosca[vrsta][6] == PRAZNO:
+                yield ((vrsta, 6))
+            # Dolga rošada
+            rosada_dolga = igra.rosada_beli_dolga if igra.na_vrsti == BELI else igra.rosada_crni_dolga
+            if rosada_dolga and igra.plosca[vrsta][3] == PRAZNO and igra.plosca[vrsta][2] == PRAZNO:
+                yield ((vrsta, 2))
         # Ostali premiki kralja
         for i_korak, j_korak in self.koraki:
             if v_sahovnici((i + i_korak, j + j_korak)):
@@ -224,6 +225,11 @@ class Sah():
              self.rosada_crni_dolga,
              self.plosca) = self.igra.pop()
 
+
+    def promocija(self):
+        p = Promocija(self)
+        return p.log
+
     def premakni_figuro(self, polje1, polje2):
         '''Premakni figuro iz polje1 na polje2. Spremeni, kdo je na potezi.'''
         (i1, j1) = polje1
@@ -231,7 +237,7 @@ class Sah():
         # XXX Ali je to en passant?
         # Ali je to rošada? V tem primeru ročno premaknemo še trdnjavo.
         osnovna_vrsta = 0 if self.na_vrsti == CRNI else 7
-        if self.plosca[i1][j1].vrsta == KRALJ and abs(j2 - j1) == 2:
+        if self.plosca[i1][j1].vrsta == KRALJ and abs(j2 - j1) == 2 and self.dovoli_rosado(self.na_vrsti):
             if j2 == 2:
                 (self.plosca[osnovna_vrsta][0], self.plosca[osnovna_vrsta][3]) = (PRAZNO, self.plosca[osnovna_vrsta][0])
             elif j2 == 6:
@@ -239,7 +245,16 @@ class Sah():
         # Ali je to promocija? (Promocija vedno v kraljico)
         zadnja_vrsta = 0 if self.na_vrsti == BELI else 7
         if self.plosca[i1][j1].vrsta == KMET and i2 == zadnja_vrsta:
-            (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
+            if True:
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
+            else:
+                stikalo = {'dama':Kraljica(self.na_vrsti),
+                           'konj':Konj(self.na_vrsti),
+                           'trdnjava':Trdnjava(self.na_vrsti),
+                           'lovec':Lovec(self.na_vrsti)}
+                p = self.promocija()
+                figura = stikalo.get(p,Kraljica(self.na_vrsti))
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, figura)
         else:
             (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
         # XXX ali je treba omogociti kak en passant?
@@ -334,5 +349,20 @@ class Sah():
                             self.plosca[kralj_i + i_premika][kralj_j + j_premika].vrsta == KMET:
                         return True
         return False
+
+    def dovoli_rosado(self, barva):
+        '''Če je kralj napaden ne dovoli rošade'''
+        if barva == BELI:
+            if self.je_sah(barva):
+                return False
+            else:
+                return True
+        elif barva == CRNI:
+            if self.je_sah(barva):
+                return False
+            else:
+                return True
+
+
 
 # sahec = Sah()

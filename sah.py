@@ -14,6 +14,7 @@ import logika
 from clovek import *
 from racunalnik import *
 from minimax import *
+from promocija import *
 
 MINIMAX_GLOBINA = 2
 
@@ -27,6 +28,7 @@ class Sahovnica():
         self.igralec_beli = None # Nastavimo ob začetku igre
         self.igralec_crni = None
         self.sah = None
+        self.log = None
 
         # Ob zaprtju okna
         master.protocol("WM_DELETE_WINDOW", lambda: self.zapri_okno(master))
@@ -212,6 +214,8 @@ class Sahovnica():
                     x = Sahovnica.ODMIK + (j * Sahovnica.VELIKOST_POLJA) + Sahovnica.VELIKOST_POLJA/2
                     y = Sahovnica.ODMIK + (i * Sahovnica.VELIKOST_POLJA) + Sahovnica.VELIKOST_POLJA/2
                     self.plosca.create_image(x, y, image=foto, tag=FIGURA)
+    
+
 
 if __name__ == "__main__":
 
