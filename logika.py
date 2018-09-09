@@ -352,17 +352,6 @@ class Sah():
 
     def dovoli_rosado(self, barva):
         '''Če je kralj napaden ne dovoli rošade'''
-        if barva == BELI:
-            if self.je_sah(barva):
-                return False
-            else:
-                return True
-        elif barva == CRNI:
-            if self.je_sah(barva):
-                return False
-            else:
-                return True
-
-
+        return not self.je_sah(barva)
 
 # sahec = Sah()
