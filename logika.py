@@ -82,11 +82,11 @@ class Kralj(Figura):
         if igra.dovoli_rosado(igra.na_vrsti):
             vrsta = 0 if igra.na_vrsti == CRNI else 7
             rosada_kratka = igra.rosada_beli_kratka if igra.na_vrsti == BELI else igra.rosada_crni_kratka
-            if rosada_kratka and igra.plosca[vrsta][5] == PRAZNO and igra.plosca[vrsta][6] == PRAZNO:
+            if rosada_kratka and igra.plosca[vrsta][5] == PRAZNO and igra.plosca[vrsta][6] == PRAZNO and isinstance(igra.plosca[vrsta][7],Trdnjava) and igra.plosca[vrsta][7].barva==self.barva:
                 yield ((vrsta, 6))
             # Dolga rošada
             rosada_dolga = igra.rosada_beli_dolga if igra.na_vrsti == BELI else igra.rosada_crni_dolga
-            if rosada_dolga and igra.plosca[vrsta][3] == PRAZNO and igra.plosca[vrsta][2] == PRAZNO:
+            if rosada_dolga and igra.plosca[vrsta][3] == PRAZNO and igra.plosca[vrsta][2] == PRAZNO and isinstance(igra.plosca[vrsta][0],Trdnjava) and igra.plosca[vrsta][0].barva==self.barva:
                 yield ((vrsta, 2))
         # Ostali premiki kralja
         for i_korak, j_korak in self.koraki:
