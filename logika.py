@@ -1,159 +1,357 @@
-# logika igre
-# Tukaj se preverja stanje igre in veljavnost potez. Tukaj se ZARES DOGAJA :)
+import logging
+from promocija import Promocija
 
-from figure import *
+KRALJ = 'kralj'
+KRALJICA = 'kraljica'
+TRDNJAVA = 'trdnjava'
+LOVEC = 'lovec'
+KONJ = 'konj'
+KMET = 'kmet'
+PRAZNO = 'prazno'
 
-class Šah:
-    '''Kraljevska igra kraljev.'''
+BELI = 'beli'
+CRNI = 'crni'
+REMI = 'remi'
+
+def v_sahovnici(polozaj):
+    x, y = polozaj
+    return  0 <= x <= 7 and 0 <= y <= 7
+
+class Figura:
+    def __init__(self, barva, vrsta, vrednost, vektorji_premika=None):
+        self.barva = barva
+        self.vrsta = vrsta
+        self.vrednost = vrednost
+        self.vektorji_premika = vektorji_premika
+
+    def dovoljeni_premiki(self, igra, i, j):
+        '''Vraca polja, na katera se lahko figura premakne, če je na polju (i,j).'''
+        # Ta verzija deluje za kraljico, lovca in trdnjavo
+        assert (self.vektorji_premika is not None)
+        for i_premika, j_premika in self.vektorji_premika:
+            n = 1
+            while v_sahovnici((i + n * i_premika, j + n * j_premika)):
+                if igra.plosca[i + n * i_premika][j + n * j_premika] == PRAZNO: # Na prazno polje se lahko premaknemo
+                    yield ((i + n * i_premika, j + n * j_premika))
+                else:
+                    if igra.plosca[i + n * i_premika][j + n * j_premika].barva != self.barva:
+                        yield ((i + n * i_premika, j + n * j_premika))
+                    break # Ne moremo preskočiti nasprotnikove figure
+                n += 1
+
+    def __str__(self):
+        return '{1} {0}'.format(self.vrsta, self.barva)
+
+
+class Kraljica(Figura):
+    def __init__(self, barva):
+        Figura.__init__(self, barva, KRALJICA, 9,
+                        [(-1, 1), (1, 1), (-1, -1), (1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)])
+
+
+class Lovec(Figura):
+    def __init__(self, barva):
+        Figura.__init__(self, barva, LOVEC, 3, [(-1, 1), (1, 1), (-1, -1), (1, -1)])
+
+class Konj(Figura):
+    SKOKI = [(1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1), (2, 1)]
+
+    def __init__(self, barva):
+        Figura.__init__(self, barva, KONJ, 3)
+
+    def dovoljeni_premiki(self, igra, i, j):
+        '''Premiki konja.'''
+        for i_skok, j_skok in Konj.SKOKI:
+            if v_sahovnici((i + i_skok, j + j_skok)):
+                if igra.plosca[i + i_skok][j + j_skok] == PRAZNO:
+                    yield ((i + i_skok, j + j_skok))
+                elif igra.plosca[i + i_skok][j + j_skok].barva != self.barva:
+                    yield ((i + i_skok, j + j_skok))
+
+class Trdnjava(Figura):
+    def __init__(self, barva):
+        Figura.__init__(self, barva, TRDNJAVA, 5, [(0, 1), (0, -1), (1, 0), (-1, 0)])
+
+class Kralj(Figura):
+    def __init__(self, barva):
+        Figura.__init__(self, barva, KRALJ, 100)
+        self.koraki = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
+
+    def dovoljeni_premiki(self, igra, i, j):
+        '''Premiki kralja.'''
+        if igra.dovoli_rosado(igra.na_vrsti):
+            vrsta = 0 if igra.na_vrsti == CRNI else 7
+            rosada_kratka = igra.rosada_beli_kratka if igra.na_vrsti == BELI else igra.rosada_crni_kratka
+            if rosada_kratka and igra.plosca[vrsta][5] == PRAZNO and igra.plosca[vrsta][6] == PRAZNO and isinstance(igra.plosca[vrsta][7],Trdnjava) and igra.plosca[vrsta][7].barva==self.barva:
+                yield ((vrsta, 6))
+            # Dolga rošada
+            rosada_dolga = igra.rosada_beli_dolga if igra.na_vrsti == BELI else igra.rosada_crni_dolga
+            if rosada_dolga and igra.plosca[vrsta][3] == PRAZNO and igra.plosca[vrsta][2] == PRAZNO and isinstance(igra.plosca[vrsta][0],Trdnjava) and igra.plosca[vrsta][0].barva==self.barva:
+                yield ((vrsta, 2))
+        # Ostali premiki kralja
+        for i_korak, j_korak in self.koraki:
+            if v_sahovnici((i + i_korak, j + j_korak)):
+                if (igra.plosca[i + i_korak][j + j_korak] == PRAZNO or
+                    igra.plosca[i + i_korak][j + j_korak].barva != self.barva):
+                    yield ((i + i_korak, j + j_korak))
+
+class Kmet(Figura):
+    def __init__(self, barva):
+        Figura.__init__(self, barva, KMET, 1)
+        self.koraki = [(1, 0), (2, 0), (1, 1), (1, -1)]
+
+    def dovoljeni_premiki(self, igra, i, j):
+        '''Premiki kmeta.'''
+        koeficient = (-1 if self.barva == BELI else 1) # smer v katero gre
+        for i_premika, j_premika in self.koraki:
+            i_premika *=  koeficient
+            if v_sahovnici((i + i_premika, j + j_premika)):
+                if j_premika != 0: # Pojemo nasprotnikovo figuro
+                    # XXX tu bi morali gledati tudi self.en_passant
+                    if igra.plosca[i + i_premika][j + j_premika] != PRAZNO and \
+                       igra.plosca[i + i_premika][j + j_premika].barva != self.barva:
+                        yield ((i + i_premika, j + j_premika))
+                else: # Premik naprej
+                    zacetna_pozicija = (1 if self.barva == CRNI else 6)
+                    if abs(i_premika) == 1 and igra.plosca[i + i_premika][j] == PRAZNO: # Skok za 1
+                        yield ((i + i_premika, j))
+                    elif igra.plosca[i + i_premika // 2][j] == PRAZNO and igra.plosca[i + i_premika][j] == PRAZNO and \
+                            i == zacetna_pozicija: # Skok za 2, obe polji morata biti prosti
+                        yield ((i + i_premika, j))
+
+# Začetne pozicije, najprej za ne-kmete:
+zacetne_pozicije = {
+    (0,0) : Trdnjava(CRNI),
+    (0,1) : Konj(CRNI),
+    (0,2) : Lovec(CRNI),
+    (0,3) : Kraljica(CRNI),
+    (0,4) : Kralj(CRNI),
+    (0,5) : Lovec(CRNI),
+    (0,6) : Konj(CRNI),
+    (0,7) : Trdnjava(CRNI),
+    (7,0) : Trdnjava(BELI),
+    (7,1) : Konj(BELI),
+    (7,2) : Lovec(BELI),
+    (7,3) : Kraljica(BELI),
+    (7,4) : Kralj(BELI),
+    (7,5) : Lovec(BELI),
+    (7,6) : Konj(BELI),
+    (7,7) : Trdnjava(BELI)
+}
+# Dodamo še kmete
+for i in range(8):
+    zacetne_pozicije[(1,i)] = Kmet(CRNI)
+    zacetne_pozicije[(6,i)] = Kmet(BELI)
+
+class Sah():
+    """Objekt razreda Sah opisuje trenutno stanje igre in hrani zgodovino igre."""
 
     def __init__(self):
+        self.igra = [] # Zgodovina igre
+        self.na_vrsti = BELI
+        # Podatki o rosadah, zaenkrat se ne uporabljajo
+        self.rosada_beli_kratka = True
+        self.rosada_beli_dolga = True
+        self.rosada_crni_kratka = True
+        self.rosada_crni_dolga = True
+        self.plosca = [[PRAZNO for j in range(8)] for i in range(8)]
+        for ((i,j), figura) in zacetne_pozicije.items():
+            self.plosca[i][j] = figura
 
-        self.zacni_igro()
+    def kopija(self):
+        '''Vrne 'globoko' kopijo trenutnega stanja igre. Uporabno za minimax.'''
+        sah = Sah()
+        sah.na_vrsti = self.na_vrsti
+        sah.rosada_beli_kratka = self.rosada_beli_kratka
+        sah.rosada_beli_dolga = self.rosada_beli_dolga
+        sah.rosada_crni_kratka = self.rosada_crni_kratka
+        sah.rosada_crni_dolga = self.rosada_crni_dolga
+        sah.plosca = [vrstica[:] for vrstica in self.plosca]
+        return sah
 
-
-    def zacni_igro(self):
-        '''Začetno stanje igre.'''
-
-        # bele figure
-        self.K = Kralj('beli', (7, 4))
-        D = Dama('beli', (7, 3))
-        T1 = Trdnjava('beli', (7, 0))
-        T2 = Trdnjava('beli', (7, 7))
-        L1 = Lovec('beli', (7, 2))
-        L2 = Lovec('beli', (7, 5))
-        S1 = Konj('beli', (7, 1))
-        S2 = Konj('beli', (7, 6))
-        k1, k2, k3, k4, k5, k6, k7, k8 = [Kmet('beli', (6, i)) for i in range(8)]
-
-        # črne figure
-        self.K_ = Kralj('crni', (0, 4))
-        D_ = Dama('crni', (0, 3))
-        T1_ = Trdnjava('crni', (0,0))
-        T2_ = Trdnjava('crni', (0, 7))
-        L1_ = Lovec('crni', (0, 2))
-        L2_ = Lovec('crni', (0, 5))
-        S1_ = Konj('crni', (0, 1))
-        S2_ = Konj('crni', (0, 6))
-        k1_, k2_, k3_, k4_, k5_, k6_, k7_, k8_ = [Kmet('crni', (1, i)) for i in range(8)]
-
-        # možnosti za rošado:
-        self.rosada_b1 = True # leva
-        self.rosada_b2 = True
-        self.rosada_c1 = True
-        self.rosada_c2 = True
-
-
-        # self.poteza = 0
-        self.na_potezi = 'beli'
-        self.konec_igre = False
-        self.oznacena_figura = None
-
-        self.zelimo_oznaciti = None
-
-
-
-
-        # matrika s trenutno pozicijo
-        self.IGRA = [
-            [T1_ , S1_ , L1_ , D_  , self.K_  , L2_ , S2_ , T2_ ],
-            [k1_ , k2_ , k3_ , k4_ , k5_ , k6_ , k7_ , k8_],
-            [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
-            [k1  , k2  , k3  , k4  , k5  , k6  , k7  , k8  ],
-            [T1  , S1  , L1  , D   , self.K   , L2  , S2  , T2  ]]
-        [print(i) for i in self.IGRA]
-
-
-
-    def lahko_oznacimo(self, i, j):
-        '''Vrne True, če smemo označiti željeno figuro, False sicer.'''
-        zeljena_figura = self.IGRA[i][j]
-        if zeljena_figura is None:  # smo kliknili 'v prazno':
-            return False
-        if zeljena_figura.barva != self.na_potezi:
-            return False
+    def nekralj(self):
+        '''Preveri ali so še kakšne figure poleg kraljev'''
+        for i in range(8):
+            for j in range(8):
+                if (self.plosca[i][j] != PRAZNO and
+                    self.plosca[i][j].vrsta != KRALJ):
+                    return False
         return True
 
-
-    def je_sah(self):
-        '''Vrne True, če je naš kralj v šahu.'''
-        kralj = self.K if self.na_potezi == 'beli' else self.K_
-        return kralj.je_sah(self.IGRA)
-
-
-    def veljavne_poteze(self):
-        '''Vrne seznam parov (i,j) veljavnih potez.'''
-        veljavne_poteze = []
-        vse_poteze_figure = self.oznacena_figura.veljavne_poteze(self.IGRA)
-        for poteza in vse_poteze_figure:
-            if self.simuliraj_potezo(poteza):
-                veljavne_poteze.append(poteza)
-        return veljavne_poteze
-
-    def simuliraj_potezo(self, poteza):
-        '''Simulira potezo, da vidi, ali bo po koncu poteze naš kralj v šahu.
-        Vrne True, če je poteza dovoljena.'''
-        dovoljen_premik = True
-        novi_i, novi_j = poteza
-        i, j = self.oznacena_figura.polozaj
-        figura_na_novem_mestu = self.IGRA[novi_i][novi_j]
-        # spremenimo matriko
-        self.premakni_figuro(novi_i, novi_j)
-        if self.je_sah():
-            dovoljen_premik = False
-        # nazaj popravimo matriko
-        self.premakni_figuro(i, j)
-        self.IGRA[novi_i][novi_j] = figura_na_novem_mestu
-        return dovoljen_premik
-
-
-
-    def premakni_figuro(self, novi_i, novi_j):
-        '''Premakne figuro v matriki igre.'''
-        stari_i, stari_j = self.oznacena_figura.polozaj
-        self.IGRA[stari_i][stari_j] = None # polje, ki ga je figura zapustila, je prazno
-        self.oznacena_figura.polozaj = (novi_i, novi_j) # nastavimo figuri novi koordinati
-        self.IGRA[novi_i][novi_j] = self.oznacena_figura # premaknemo na novi koordinati v matriki IGRE
-
-        # self.IGRA[novi_i][novi_j] = None # da zbrišemo prejšnjo figuro, ampak to je v resnici ne izbriše, kajne??? KAKO SE V RESNICI ZBRIŠE RAZRED???
-
-    def zamenjaj_igralca(self):
-        '''Zamenja barvo igralcev.'''
-        self.na_potezi = 'crni' if self.na_potezi == 'beli' else 'beli'
-
-
-
-
-
-
-
-#################################################################################3
-##      spodnje funkcije potrebujejo dopolnitev, spremembo ali so odveč        ##3
-#################################################################################3
-
-
-def veljavne_poteze(self):
-    '''Osveži seznam vseh veljavnih potez igralca, ki je na vrsti.'''
-    veljavne_poteze = []
-    for i in range(7):
-        for j in range(7):  # gremo čez vsako polje v šahovnici
-            na_potezi = na_potezi(self)
-            figura = self.IGRA[i][j]
-            if figura is not None:
-                if figura.barva == na_potezi:
-                    veljavne_poteze.append(figura.veljavne_poteze)
-    self.veljavne_poteze.extend(veljavne_poteze)
-
-
-
-            
-
-
-
-
-
+    def stanje_igre(self):
+        '''Vrni None, če igra še poteka, sicer CRNI ali BELI ali REMI.'''
+        if self.nekralj():
+            return REMI
+        for i in range(8):
+            for j in range(8):
+                if len(tuple(self.poteze_polja((i,j)))) > 0:
+                    return None # Možna je poteza, ni konec
+        if self.je_sah(self.na_vrsti):
+            # Kralj je šahu, a ni možne poteze
+            return self.nasprotna_barva()
+        else:
+            return REMI
         
 
-     
+    def kralj(self, barva):
+        '''Vrne pozicijo kralja dane barve'''
+        for i in range(8):
+            for j in range(8):
+                if (self.plosca[i][j] != PRAZNO and
+                    self.plosca[i][j].barva == barva and
+                    self.plosca[i][j].vrsta == KRALJ):
+                    return (i, j)
+        assert False, "kralja ni na plošči?!"
+
+    def nasprotna_barva(self):
+        '''Vrne barvo nasprotnega igralca.'''
+        return (CRNI if self.na_vrsti == BELI else BELI)
+
+    def shrani_igro(self):
+        self.igra.append((self.na_vrsti,
+                          self.rosada_beli_kratka,
+                          self.rosada_beli_dolga,
+                          self.rosada_crni_kratka,
+                          self.rosada_crni_dolga,
+                          [vrstica[:] for vrstica in self.plosca]))
+
+    def vrni_potezo(self):
+        '''Povrne situacijo pred eno potezo.'''
+        if len(self.igra) > 0:
+            (self.na_vrsti,
+             self.rosada_beli_kratka,
+             self.rosada_beli_dolga,
+             self.rosada_crni_kratka,
+             self.rosada_crni_dolga,
+             self.plosca) = self.igra.pop()
+
+
+    def promocija(self):
+        p = Promocija(self)
+        return p.log
+
+    def premakni_figuro(self, polje1, polje2):
+        '''Premakni figuro iz polje1 na polje2. Spremeni, kdo je na potezi.'''
+        (i1, j1) = polje1
+        (i2, j2) = polje2
+        # XXX Ali je to en passant?
+        # Ali je to rošada? V tem primeru ročno premaknemo še trdnjavo.
+        osnovna_vrsta = 0 if self.na_vrsti == CRNI else 7
+        if self.plosca[i1][j1].vrsta == KRALJ and abs(j2 - j1) == 2 and self.dovoli_rosado(self.na_vrsti):
+            if j2 == 2:
+                (self.plosca[osnovna_vrsta][0], self.plosca[osnovna_vrsta][3]) = (PRAZNO, self.plosca[osnovna_vrsta][0])
+            elif j2 == 6:
+                (self.plosca[osnovna_vrsta][7], self.plosca[osnovna_vrsta][5]) = (PRAZNO, self.plosca[osnovna_vrsta][7])
+        # Ali je to promocija? (Promocija vedno v kraljico)
+        zadnja_vrsta = 0 if self.na_vrsti == BELI else 7
+        if self.plosca[i1][j1].vrsta == KMET and i2 == zadnja_vrsta:
+            if True:
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
+            else:
+                stikalo = {'dama':Kraljica(self.na_vrsti),
+                           'konj':Konj(self.na_vrsti),
+                           'trdnjava':Trdnjava(self.na_vrsti),
+                           'lovec':Lovec(self.na_vrsti)}
+                p = self.promocija()
+                figura = stikalo.get(p,Kraljica(self.na_vrsti))
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, figura)
+        else:
+            (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
+        # XXX ali je treba omogociti kak en passant?
+        # Ali je treba kako rosado nastaviti na False?
+        # A) Premikamo tope
+        if (i1, j1) == (7, 0):
+            self.rosada_beli_dolga = False
+        elif (i1, j1) == (7, 7):
+            self.rosada_beli_kratka = False
+        elif (i1, j1) == (0, 0):
+            self.rosada_crni_dolga = False
+        elif (i1, j1) == (0, 7):
+            self.rosada_crni_kratka = False
+        # B) Premikamo kralja
+        if (i1, j1) == (7, 4):
+            (self.rosada_beli_dolga, self.rosada_beli_kratka) = (False, False)
+        elif (i1, j1) == (0, 4):
+            (self.rosada_crni_dolga, self.rosada_crni_kratka) = (False, False)
+        self.na_vrsti = self.nasprotna_barva()
+
+    def naredi_potezo(self, poteza):
+        '''Če je poteza veljavna, jo naredi in vrne True. Če poteza ni dovoljena, vrni False.
+           Poleg tega shrani prejšnjo pozicijo v zgodovino igre.'''
+        (polje1, polje2) = poteza
+        dovoljene = tuple(self.poteze_polja(polje1))
+        if poteza in dovoljene:
+            logging.debug('sah prejel veljavno potezo {0} -> {1}'.format(polje1, polje2))
+            self.shrani_igro()
+            self.premakni_figuro(polje1, polje2)
+        else:
+            logging.debug('sah prejel neveljavno potezo {0} -> {1}, na potezi je {2}, dovoljene so {3}'.format(polje1, polje2, self.na_vrsti, dovoljene))
+
+    def vse_poteze(self):
+        '''Vrne seznam vseh veljavnih potez v dani situaciji.'''
+        for i in range(8):
+            for j in range(8):
+                for poteza in self.poteze_polja((i,j)):
+                    yield poteza
+
+    def poteze_polja(self, polje):
+        '''Vrne seznam dovoljenih potez za figuro na danem polju.'''
+        (i,j) = polje
+        figura = self.plosca[i][j]
+        if figura == PRAZNO or figura.barva != self.na_vrsti:
+            # Polje je prazno ali pa figura, ki je tu, ni na potezi
+            pass
+        else:
+            premiki = tuple(figura.dovoljeni_premiki(self, i, j))
+            logging.debug("premiki figure {0} so {1}".format(polje, premiki))
+            barva = self.na_vrsti
+            for polje2 in premiki:
+                self.shrani_igro()
+                self.premakni_figuro(polje, polje2) # Simuliramo
+                je_sah = self.je_sah(barva)
+                self.vrni_potezo()
+                if not je_sah:
+                    yield (polje, polje2)
+
+    def je_sah(self, barva):
+        '''Vrne True, če je kralj dane barve v šahu.'''
+        (kralj_i, kralj_j) = self.kralj(barva)
+        # Šah zaradi kraljice, trdnjave ali lovca
+        vektorji_nevarnih = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, -1), (-1, 1)]
+        for vektor in vektorji_nevarnih:
+            n = 1
+            i, j = kralj_i + n * vektor[0], kralj_j + n * vektor[1]
+            while v_sahovnici((i, j)):
+                druga_figura = TRDNJAVA if abs(vektor[0] + vektor[1]) == 1 else LOVEC
+                if self.plosca[i][j] != PRAZNO:
+                    if self.plosca[i][j].barva != barva and ((n == 1 and self.plosca[i][j].vrsta == KRALJ) or
+                                    self.plosca[i][j].vrsta in [KRALJICA, druga_figura]):
+                        return True
+                    else:
+                        break  # Druge figure niso nevarne
+                n += 1
+                i, j = kralj_i + n * vektor[0], kralj_j + n * vektor[1]
+        # Šah zaradi konja
+        for i_premika, j_premika in Konj.SKOKI:
+            if v_sahovnici((kralj_i + i_premika, kralj_j + j_premika)):
+                if self.plosca[kralj_i + i_premika][kralj_j + j_premika] != PRAZNO and \
+                            self.plosca[kralj_i + i_premika][kralj_j + j_premika].barva != barva and \
+                            self.plosca[kralj_i + i_premika][kralj_j + j_premika].vrsta == KONJ:
+                        return True
+        # Šah zaradi kmeta
+        vektorji_kmeta = [(1, 1), (1, -1)]
+        koeficient = -1 if barva == BELI else 1
+        for i_premika, j_premika in vektorji_kmeta:
+            i_premika *= koeficient
+            if v_sahovnici((kralj_i + i_premika, kralj_j + j_premika)):
+                if self.plosca[kralj_i + i_premika][kralj_j + j_premika] != PRAZNO and \
+                            self.plosca[kralj_i + i_premika][kralj_j + j_premika].barva != barva and \
+                            self.plosca[kralj_i + i_premika][kralj_j + j_premika].vrsta == KMET:
+                        return True
+        return False
+
+    def dovoli_rosado(self, barva):
+        '''Če je kralj napaden ne dovoli rošade'''
+        return not self.je_sah(barva)
+
+# sahec = Sah()
