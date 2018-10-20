@@ -49,6 +49,16 @@ class Sahovnica():
         menu_igra.add_command(label="Računalnik - Računalnik",
                               command=lambda: self.zacni_igro(Racunalnik(self, Minimax(globina)), Racunalnik(self, Minimax(globina))))
 
+        menu_mode = tk.Menu(menu)
+        
+        menu_mode.add_command(label="Običajen",
+                              command=logika.zacetne_pozicije_standardni_sah)
+        menu_mode.add_command(label="Šah 960",
+                              command=None)
+        menu.add_cascade(label="Način", menu=menu_mode)
+
+        menubar = Menu(root)
+
         # Igralna površina
         self.plosca = tk.Canvas(master, width=Sahovnica.VELIKOST_POLJA * 10, height=Sahovnica.VELIKOST_POLJA * 10)
         self.plosca.grid(row=1, column=0)

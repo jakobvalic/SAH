@@ -2,14 +2,14 @@ from tkinter import *
 from tkinter import ttk
 
 class Promocija():
-    def __init__(self,sah):
-        self.sah=sah
+    def __init__(self):
         self.gui= Toplevel()
         self.gui.title("Promocija")
         self.gui.attributes("-topmost", True)
-        self.log = None
         frame = Frame(self.gui)
         frame.pack()
+        self.figura = None
+        self.prvic = False
 
         c1 = ttk.Button(self.gui, text = 'Dama', command = self.kraljica)
         c1.pack()
@@ -24,18 +24,22 @@ class Promocija():
         c4.pack()
 
     def kraljica(self):
-        self.sah.log = 'dama'
+        self.figura = 'kraljica'
+        self.prvic = True
         self.gui.destroy()
 
     def konj(self):
-        self.sah.log = 'konj'
+        self.figura = 'konj'
+        self.prvic = True
         self.gui.destroy()
 
     def trdnjava(self):
-        self.sah.log = 'trdnjava'
+        self.figura = 'trdnjava'
+        self.prvic = True
         self.gui.destroy()
 
     def lovec(self):
-        self.sah.log = 'lovec'
+        self.figura = 'lovec'
+        self.prvic = True
         self.gui.destroy()
 
