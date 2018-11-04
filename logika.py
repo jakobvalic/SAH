@@ -204,6 +204,7 @@ class Sah():
     def __init__(self):
         self.igra = [] # Zgodovina igre
         self.na_vrsti = BELI
+        self.promocija = False
         # Podatki o rosadah, zaenkrat se ne uporabljajo
         self.rosada_beli_kratka = True
         self.rosada_beli_dolga = True
@@ -281,12 +282,7 @@ class Sah():
              self.plosca) = self.igra.pop()
 
 
-    def promocija(self):
-        p = Promocija()
-        if p.prvic == True:
-            return p.figura
-
-    def premakni_figuro(self, polje1, polje2):
+    def premakni_figuro(self, polje1, polje2, premik=False):
         '''Premakni figuro iz polje1 na polje2. Spremeni, kdo je na potezi.'''
         (i1, j1) = polje1
         (i2, j2) = polje2
@@ -302,16 +298,19 @@ class Sah():
         zadnja_vrsta = 0 if self.na_vrsti == BELI else 7
         if self.plosca[i1][j1].vrsta == KMET and i2 == zadnja_vrsta:
             (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
-            if self.plosca[i2][j2].vrsta == KMET:
+            if self.plosca[i2][j2].vrsta == KMET and premik:
+                self.promocija = True
                 stikalo = {KRALJICA: Kraljica(self.na_vrsti),
                            KONJ: Konj(self.na_vrsti),
                            TRDNJAVA: Trdnjava(self.na_vrsti),
                            LOVEC: Lovec(self.na_vrsti)}
-                p = self.promocija()
+                p = Kraljica(self.na_vrsti)
                 figura = stikalo.get(p, Kraljica(self.na_vrsti))
-                figura = Kraljica(self.na_vrsti)
                 (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, figura)
+            else:
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
         else:
+            self.promocija = False
             (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
         # XXX ali je treba omogociti kak en passant?
         # Ali je treba kako rosado nastaviti na False?
@@ -363,7 +362,7 @@ class Sah():
             barva = self.na_vrsti
             for polje2 in premiki:
                 self.shrani_igro()
-                self.premakni_figuro(polje, polje2) # Simuliramo
+                self.premakni_figuro(polje, polje2, False) # Simuliramo
                 je_sah = self.je_sah(barva)
                 self.vrni_potezo()
                 if not je_sah:

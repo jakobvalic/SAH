@@ -29,6 +29,7 @@ class Sahovnica():
         self.igralec_crni = None
         self.sah = None
         self.log = None
+        self.master = master
 
         # Ob zaprtju okna
         master.protocol("WM_DELETE_WINDOW", lambda: self.zapri_okno(master))
@@ -57,7 +58,6 @@ class Sahovnica():
                               command=None)
         menu.add_cascade(label="Način", menu=menu_mode)
 
-        menubar = Menu(root)
 
         # Igralna površina
         self.plosca = tk.Canvas(master, width=Sahovnica.VELIKOST_POLJA * 10, height=Sahovnica.VELIKOST_POLJA * 10)
@@ -187,7 +187,8 @@ class Sahovnica():
         # V vsakem primeru polje odznacimo
         self.oznaceno_polje = None
         self.prikaz_figur()
-
+        if self.sah.promocija:
+            p = Promocija(self.master)
         # Preverimo, ali je prišlo do zmage
         zmagovalec = self.sah.stanje_igre()
         if zmagovalec is not None:
