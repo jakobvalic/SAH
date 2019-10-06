@@ -1,5 +1,6 @@
 import logging
 from promocija import Promocija
+import random
 
 KRALJ = 'kralj'
 KRALJICA = 'kraljica'
@@ -120,28 +121,82 @@ class Kmet(Figura):
                         yield ((i + i_premika, j))
 
 # Začetne pozicije, najprej za ne-kmete:
-zacetne_pozicije = {
-    (0,0) : Trdnjava(CRNI),
-    (0,1) : Konj(CRNI),
-    (0,2) : Lovec(CRNI),
-    (0,3) : Kraljica(CRNI),
-    (0,4) : Kralj(CRNI),
-    (0,5) : Lovec(CRNI),
-    (0,6) : Konj(CRNI),
-    (0,7) : Trdnjava(CRNI),
-    (7,0) : Trdnjava(BELI),
-    (7,1) : Konj(BELI),
-    (7,2) : Lovec(BELI),
-    (7,3) : Kraljica(BELI),
-    (7,4) : Kralj(BELI),
-    (7,5) : Lovec(BELI),
-    (7,6) : Konj(BELI),
-    (7,7) : Trdnjava(BELI)
-}
-# Dodamo še kmete
-for i in range(8):
-    zacetne_pozicije[(1,i)] = Kmet(CRNI)
-    zacetne_pozicije[(6,i)] = Kmet(BELI)
+def zacetne_pozicije_standardni_sah():
+    zacetne_pozicije = {
+        (0,0) : Trdnjava(CRNI),
+        (0,1) : Konj(CRNI),
+        (0,2) : Lovec(CRNI),
+        (0,3) : Kraljica(CRNI),
+        (0,4) : Kralj(CRNI),
+        (0,5) : Lovec(CRNI),
+        (0,6) : Konj(CRNI),
+        (0,7) : Trdnjava(CRNI),
+        (7,0) : Trdnjava(BELI),
+        (7,1) : Konj(BELI),
+        (7,2) : Lovec(BELI),
+        (7,3) : Kraljica(BELI),
+        (7,4) : Kralj(BELI),
+        (7,5) : Lovec(BELI),
+        (7,6) : Konj(BELI),
+        (7,7) : Trdnjava(BELI)
+    }
+    # Dodamo še kmete
+    for i in range(8):
+        zacetne_pozicije[(1,i)] = Kmet(CRNI)
+        zacetne_pozicije[(6,i)] = Kmet(BELI)
+    return zacetne_pozicije
+
+def zacetne_pozicije_960():
+    zacetne_pozicije = {}
+    # jagra morata biti na različnih barvah različen j (sod, lih)
+    # kralj mora biti med trdnjavami
+    k=0
+    j = random.randint(0,8)
+    zacetne_pozicije[(0, j)] = Lovec(CRNI)
+    zacetne_pozicije[(7, j)] = Lovec(BELI)
+    if j%2==0:
+        while j%2 == 0:
+            j = random.randint(0,8)
+    else:
+        while j%2:
+            j = random.randint(0,8)
+    zacetne_pozicije[(0, j)] = Lovec(CRNI)
+    zacetne_pozicije[(7, j)] = Lovec(BELI)
+    while (0,j) not in zacetne_pozicije:
+        j = random.randint(0,8)
+    k = j
+    zacetne_pozicije[(0, j)] = Trdnjava(CRNI)
+    zacetne_pozicije[(7, j)] = Trdnjava(BELI)
+    while (0,j) not in zacetne_pozicije:
+        j = random.randint(0,8)
+        if abs(k-j) < 2:
+            continue
+        if j-k == 2:
+            zacetne_pozicije[(0, k+1)] = Kralj(CRNI)
+            zacetne_pozicije[(7, k+1)] = Kralj(BELI)
+        if k-j == 2:
+            zacetne_pozicije[(0, j+1)] = Kralj(CRNI)
+            zacetne_pozicije[(7, j+1)] = Kralj(BELI)
+    zacetne_pozicije[(0, j)] = Trdnjava(CRNI)
+    zacetne_pozicije[(7, j)] = Trdnjava(BELI)
+    while (0,j) not in zacetne_pozicije:
+        j = random.randint(0,8)
+    zacetne_pozicije[(0, j)] = Kraljica(CRNI)
+    zacetne_pozicije[(7, j)] = Kraljica(BELI)
+    while (0,j) not in zacetne_pozicije:
+        j = random.randint(0,8)
+    zacetne_pozicije[(0, j)] = Konj(CRNI)
+    zacetne_pozicije[(7, j)] = Konj(BELI)
+    while (0,j) not in zacetne_pozicije:
+        j = random.randint(0,8)
+    zacetne_pozicije[(0, j)] = Konj(CRNI)
+    zacetne_pozicije[(7, j)] = Konj(BELI)
+    
+    
+    for i in range(8): # kmetje so tako kot so
+        zacetne_pozicije[(1,i)] = Kmet(CRNI)
+        zacetne_pozicije[(6,i)] = Kmet(BELI)
+    return zacetne_pozicije
 
 class Sah():
     """Objekt razreda Sah opisuje trenutno stanje igre in hrani zgodovino igre."""
@@ -149,13 +204,14 @@ class Sah():
     def __init__(self):
         self.igra = [] # Zgodovina igre
         self.na_vrsti = BELI
+        self.promocija = False
         # Podatki o rosadah, zaenkrat se ne uporabljajo
         self.rosada_beli_kratka = True
         self.rosada_beli_dolga = True
         self.rosada_crni_kratka = True
         self.rosada_crni_dolga = True
         self.plosca = [[PRAZNO for j in range(8)] for i in range(8)]
-        for ((i,j), figura) in zacetne_pozicije.items():
+        for ((i,j), figura) in zacetne_pozicije_standardni_sah().items():
             self.plosca[i][j] = figura
 
     def kopija(self):
@@ -226,11 +282,7 @@ class Sah():
              self.plosca) = self.igra.pop()
 
 
-    def promocija(self):
-        p = Promocija(self)
-        return p.log
-
-    def premakni_figuro(self, polje1, polje2):
+    def premakni_figuro(self, polje1, polje2, premik=False):
         '''Premakni figuro iz polje1 na polje2. Spremeni, kdo je na potezi.'''
         (i1, j1) = polje1
         (i2, j2) = polje2
@@ -245,17 +297,20 @@ class Sah():
         # Ali je to promocija? (Promocija vedno v kraljico)
         zadnja_vrsta = 0 if self.na_vrsti == BELI else 7
         if self.plosca[i1][j1].vrsta == KMET and i2 == zadnja_vrsta:
-            if True:
-                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
-            else:
-                stikalo = {'dama':Kraljica(self.na_vrsti),
-                           'konj':Konj(self.na_vrsti),
-                           'trdnjava':Trdnjava(self.na_vrsti),
-                           'lovec':Lovec(self.na_vrsti)}
-                p = self.promocija()
-                figura = stikalo.get(p,Kraljica(self.na_vrsti))
+            (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
+            if self.plosca[i2][j2].vrsta == KMET and premik:
+                self.promocija = True
+                stikalo = {KRALJICA: Kraljica(self.na_vrsti),
+                           KONJ: Konj(self.na_vrsti),
+                           TRDNJAVA: Trdnjava(self.na_vrsti),
+                           LOVEC: Lovec(self.na_vrsti)}
+                p = Kraljica(self.na_vrsti)
+                figura = stikalo.get(p, Kraljica(self.na_vrsti))
                 (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, figura)
+            else:
+                (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, Kraljica(self.na_vrsti))
         else:
+            self.promocija = False
             (self.plosca[i1][j1], self.plosca[i2][j2]) = (PRAZNO, self.plosca[i1][j1])
         # XXX ali je treba omogociti kak en passant?
         # Ali je treba kako rosado nastaviti na False?
@@ -307,7 +362,7 @@ class Sah():
             barva = self.na_vrsti
             for polje2 in premiki:
                 self.shrani_igro()
-                self.premakni_figuro(polje, polje2) # Simuliramo
+                self.premakni_figuro(polje, polje2, False) # Simuliramo
                 je_sah = self.je_sah(barva)
                 self.vrni_potezo()
                 if not je_sah:
